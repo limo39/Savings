@@ -1,9 +1,9 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import member_dashboard, superuser_dashboard, member_registration, deactivate_user, HomeView, signup
+from .views import member_dashboard, superuser_dashboard, member_registration, deactivate_user, home, signup, CustomLoginView
 
 urlpatterns = [
-    path('', HomeView.as_view(), name='home'),
+    path('', home, name='home'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('signup/', auth_views.LogoutView.as_view(), name='signup'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

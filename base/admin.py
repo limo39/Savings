@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Member, Contribution
+from .models import Member, Contribution, SavingsGroup, Transaction
 
 class MemberAdmin(admin.ModelAdmin):
     list_display = ('id_number', 'mobile_number', 'email')
@@ -14,3 +14,9 @@ class ContributionAdmin(admin.ModelAdmin):
     search_fields = ('member__username', 'transaction_id')
 
 admin.site.register(Contribution, ContributionAdmin)
+
+class SavingsGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'created_at')
+    search_fields = ('name',)
+
+admin.site.register(SavingsGroup, SavingsGroupAdmin)
