@@ -5,5 +5,12 @@
 {% block content %}
 <h1>Member Dashboard</h1>
 <p>Welcome, {{ user.username }}!</p>
-<!-- Display member's contribution information here -->
+  <p>You are a member of the following Savings Groups:</p>
+  <ul>
+    {% for membership in user.member.memberships.all %}
+      <li>{{ membership.savings_group.name }}</li>
+    {% empty %}
+      <li>You are not a member of any Savings Groups yet.</li>
+    {% endfor %}
+  </ul>
 {% endblock %}

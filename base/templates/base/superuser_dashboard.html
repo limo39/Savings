@@ -5,5 +5,45 @@
 {% block content %}
 <h1>Superuser Dashboard</h1>
 <p>Welcome, {{ user.username }}!</p>
-<!-- Display group's contribution information here -->
+  <h2>Members</h2>
+  <p>Current members:</p>
+  <ul>
+    {% for member in members %}
+      <li>
+        {{ member.user.username }}
+        {% if member.is_active %}
+          <a href="{% url 'deactivate_member' member.id %}">(Deactivate)</a>
+        {% endif %}
+        <a href="#">(Remove)</a>
+      </li>
+    {% empty %}
+      <li>No members found.</li>
+    {% endfor %}
+  </ul>
+  <form action="#" method="post">
+    {% csrf_token %}
+    <label for="username">Username:</label>
+    <input type="text" name="username" id="username">
+    <button type="submit">Add member</button>
+  </form>
+  
+  <h2>Transactions</h2>
+  <p>All transactions:</p>
+  <ul>
+    {% for transaction in transactions %}
+      <li>{{ transaction.description }} - {{ transaction.amount }}</li>
+    {% empty %}
+      <li>No transactions found.</li>
+    {% endfor %}
+  </ul>
+  
+  <h2>Contributions</h2>
+  <p>All contributions:</p>
+  <ul>
+    {% for contribution in contributions %}
+      <li>{{ contribution.member.user.username }} - {{ contribution.amount }}</li>
+    {% empty %}
+      <li>No contributions found.</li>
+    {% endfor %}
+  </ul>
 {% endblock %}

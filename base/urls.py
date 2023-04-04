@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import member_dashboard, superuser_dashboard, member_registration, deactivate_user, home, signup, CustomLoginView
+from .views import DownloadTransactionsPDF, dashboard, member_dashboard, superuser_dashboard, member_registration, deactivate_user, home, signup, CustomLoginView
 
 urlpatterns = [
     path('', home, name='home'),
@@ -11,4 +11,6 @@ urlpatterns = [
     path('superuser_dashboard/', superuser_dashboard, name='superuser_dashboard'),
     path('member_registration/', member_registration, name='member_registration'),
     path('deactivate_user/<int:user_id>/', deactivate_user, name='deactivate_user'),
+    path('dashboard/', dashboard, name='dashboard'),
+    path('download_transactions/', DownloadTransactionsPDF, name='DownloadTransactionsPDF'),
 ]

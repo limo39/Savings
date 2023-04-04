@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Dashboard</h1>
+  <p>Welcome, {{ user.username }}!</p>
+
+  <h2>Year Contribution: ${{ year_contribution }}</h2>
+  <h2>Month-to-Date Contribution: ${{ mtd_contribution }}</h2>
+
+  <a href="{% url 'DownloadTransactionsPDF' %}">Download Transaction History (PDF)</a>
+{% endblock %}

@@ -1,16 +1,23 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponse
+from django.conf import settings
+from django.http import HttpResponse, FileResponse
 from django.db.models import Sum
-from .models import SavingsGroup, Member, Transaction
+from .models import SavingsGroup, Member, Transaction, Contribution
 from .forms import MemberRegistrationForm, DeactivateUserForm, MyUserCreationForm, LoginForm, SavingsGroupForm
 from django.views.generic import TemplateView
+from django.template.loader import get_template
 
 from base.forms import SavingsGroupForm
 from base.models import SavingsGroup
+
+import io
+from django.utils import timezone
+from xhtml2pdf import pisa
+from PyPDF2 import PdfFileMerger
 
 def home(request):
     return render(request, 'base/home.html')
@@ -28,16 +35,16 @@ def member_dashboard(request):
     }
     return render(request, 'base/member_dashboard.html', context)
 
-# @login_required
-# def member_dashboard(request):
-#     try:
-#         member = request.user.member
-#     except Member.DoesNotExist:
-#         # Redirect to the signup page if the user doesn't have a member object
-#         return redirect('base/signup.html')
+@login_required
+def member_dashboard(request):
+    try:
+        member = request.user.member
+    except Member.DoesNotExist:
+        # Redirect to the signup page if the user doesn't have a member object
+        return redirect('base/signup.html')
 
-#     # Render the member dashboard page
-#     return render(request, 'base/member_dashboard.html', {'member': member})
+    # Render the member dashboard page
+    return render(request, 'base/member_dashboard.html', {'member': member})
 
 @login_required
 def superuser_dashboard(request):
@@ -75,6 +82,12 @@ def superuser_dashboard(request):
     }
     return render(request, 'base/superuser_dashboard.html', context)
 
+@user_passes_test(lambda u: u.is_superuser)
+def remove_member(request, member_id):
+    member = get_object_or_404(Member, id=member_id)
+    member.delete()
+    return redirect('superuser_dashboard')
+
 def member_registration(request):
     if request.method == 'POST':
         form = MemberRegistrationForm(request.POST)
@@ -94,7 +107,7 @@ def member_registration(request):
 
     return render(request, 'base/member_registration.html', {'form': form})
 
-@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def deactivate_user(request, user_id):
     user = User.objects.get(id=user_id)
     if request.method == 'POST':
@@ -133,4 +146,36 @@ def CustomLoginView(request):
                 return redirect('home.html')  
     else:
         form = AuthenticationForm()
-    return render(request, 'base/login.html', {'form': form})  
+    return render(request, 'login', {'form': form})  
+
+@login_required
+def dashboard(request):
+    member = request.user.member
+    year_contribution = Contribution.objects.filter(member=member, transaction_date__year=timezone.now().year).aggregate(total=Sum('amount'))['total'] or 0
+    mtd_contribution = Contribution.objects.filter(member=member, transaction_date__month=timezone.now().month).aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'user': request.user,
+        'year_contribution': year_contribution,
+        'mtd_contribution': mtd_contribution,
+    }
+
+    return render(request, 'dashboard.html', context)
+
+@login_required
+def DownloadTransactionsPDF(request):
+    member = request.user.member
+
+    # Generate HTML for the PDF
+    template = get_template('dashboard.html')
+    html = template.render({'member': member})
+
+    # Generate PDF using xhtml2pdf
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="transaction_history.pdf"'
+    pisa_status = pisa.CreatePDF(
+        html, dest=response, encoding='utf-8'
+    )
+    if pisa_status.err:
+        return HttpResponse('PDF generation failed')
+    return response
