@@ -52,6 +52,22 @@ class SavingsGroupForm(forms.ModelForm):
     class Meta:
         model = SavingsGroup
         fields = ('name', 'description')
+
+class MemberCreationForm(UserCreationForm):
+    password1 = forms.CharField(label='Temporary password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Confirm temporary password', widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        user.is_active = False
+        if commit:
+            user.save()
+        return user
         
 
 

@@ -13,20 +13,14 @@
         {{ member.user.username }}
         {% if member.is_active %}
           <a href="{% url 'deactivate_member' member.id %}">(Deactivate)</a>
+          <a href="{% url 'remove_member' member.id %}">(Remove)</a>
         {% endif %}
-        <a href="#">(Remove)</a>
       </li>
     {% empty %}
       <li>No members found.</li>
     {% endfor %}
-  </ul>
-  <form action="#" method="post">
-    {% csrf_token %}
-    <label for="username">Username:</label>
-    <input type="text" name="username" id="username">
-    <button type="submit">Add member</button>
-  </form>
-  
+    <li><a href="{% url 'create_member' %}">Create Member</a></li>
+  </ul>  
   <h2>Transactions</h2>
   <p>All transactions:</p>
   <ul>

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.http import HttpResponse, FileResponse
 from django.db.models import Sum
 from .models import SavingsGroup, Member, Transaction, Contribution
-from .forms import MemberRegistrationForm, DeactivateUserForm, MyUserCreationForm, LoginForm, SavingsGroupForm
+from .forms import MemberRegistrationForm, MemberCreationForm, DeactivateUserForm, MyUserCreationForm, LoginForm, SavingsGroupForm
 from django.views.generic import TemplateView
 from django.template.loader import get_template
 
@@ -58,6 +58,26 @@ def superuser_dashboard(request):
         'total_contributions': total_contributions,
     }
     return render(request, 'superuser_dashboard.html', context)
+
+@user_passes_test(lambda u: u.is_superuser)
+@login_required
+def create_member(request):
+    form = MemberCreationForm(request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            member = form.save()
+            password = form.cleaned_data['password1']
+            member.groups.add(Group.objects.get(name='members'))
+            member.save()
+            send_mail(
+                'Your account has been created',
+                f'Your account has been created. Your temporary password is {password}. Please log in and change your password.',
+                'from@example.com',
+                [member.email],
+                fail_silently=False,
+            )
+            return redirect('dashboard')
+    return render(request, 'create_member.html', {'form': form})
 
 @user_passes_test(lambda u: u.is_superuser)
 def superuser_dashboard(request):
@@ -146,7 +166,7 @@ def CustomLoginView(request):
                 return redirect('home.html')  
     else:
         form = AuthenticationForm()
-    return render(request, 'login', {'form': form})  
+    return render(request, 'login.html', {'form': form}) 
 
 @login_required
 def dashboard(request):
