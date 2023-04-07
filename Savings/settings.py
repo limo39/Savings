@@ -12,9 +12,15 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+import django_heroku
+import socket
+
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,7 +32,16 @@ SECRET_KEY = 'django-insecure-2qt5ulo1_lz-0n%aet^q&jk4nlh2nk2^ewrrg_4$4w*bw)&)=$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
+
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    ip_address,
+    '.ngrok.io',    
+]
+#'948a-196-250-212-59.eu.ngrok.io',
 
 
 # Application definition
@@ -40,17 +55,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'base',
+    'django_daraja',
+    'django_heroku',
 ]
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+MIDDLEWARE = [    
+    'django.middleware.security.SecurityMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',  
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',    
+    'django.contrib.auth.middleware.AuthenticationMiddleware',    
+    'django.contrib.messages.middleware.MessageMiddleware',    
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'Savings.urls'
 
@@ -115,6 +134,8 @@ USE_I18N = True
 USE_TZ = True
 
 
+django_heroku.settings(locals())
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
@@ -126,3 +147,5 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

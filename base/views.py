@@ -18,6 +18,7 @@ import io
 from django.utils import timezone
 from xhtml2pdf import pisa
 from PyPDF2 import PdfFileMerger
+from django.views.decorators.csrf import csrf_exempt
 
 def home(request):
     return render(request, 'base/home.html')
@@ -199,3 +200,35 @@ def DownloadTransactionsPDF(request):
     if pisa_status.err:
         return HttpResponse('PDF generation failed')
     return response
+
+@csrf_exempt
+def mpesa_callback(request):
+    if request.method == 'POST':
+        # Parse the callback data from Mpesa
+        callback_data = json.loads(request.body)
+
+        # Get the relevant data from the callback
+        transaction_reference = callback_data['Body']['stkCallback']['CallbackMetadata']['Item'][1]['Value']
+        amount = callback_data['Body']['stkCallback']['CallbackMetadata']['Item'][0]['Value']
+        phone_number = callback_data['Body']['stkCallback']['CallbackMetadata']['Item'][4]['Value']
+        payment_date = callback_data['Body']['stkCallback']['CallbackMetadata']['Item'][3]['Value']
+
+        # Update your database with the payment details
+        contribution = Contribution.objects.get(transaction_reference=transaction_reference)
+        contribution.amount = amount
+        contribution.phone_number = phone_number
+        contribution.payment_date = payment_date
+        contribution.status = 'Paid'
+        contribution.save()
+
+        # Send a confirmation message to the member
+        message = f"Dear member, your contribution of KES {amount} has been received. Thank you for your support!"
+        send_sms(phone_number, message)
+
+        # Return a success response to Mpesa
+        response_data = {'ResultCode': 0, 'ResultDesc': 'Success'}
+        return JsonResponse(response_data)
+    else:
+        # Return an error response if the request method is not POST
+        response_data = {'ResultCode': 1, 'ResultDesc': 'Failed'}
+        return JsonResponse(response_data)
